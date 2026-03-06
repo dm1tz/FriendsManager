@@ -1,0 +1,50 @@
+name: Bump ASF reference
+on:
+  schedule:
+  - cron: '17 1 * * *'
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      with:
+        show-progress: false
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Fetch latest ArchiSteamFarm release
+      id: asf-release
+      uses: rez0n/actions-github-release@27a57820ee808f8fd940c8a9d1f7188f854aa2b5 # v2.0
+      env:
+        repository: JustArchiNET/ArchiSteamFarm
+        token: ${{ secrets.GITHUB_TOKEN }}
+        type: stable
+
+    - name: Update ASF reference if needed
+      env:
+        LATEST_ASF_RELEASE: ${{ steps.asf-release.outputs.release }}
+      shell: sh
+      run: |
+        set -eu
+
+        current_version="$(git config -f .gitmodules submodule.ArchiSteamFarm.branch)"
+        dpkg --compare-versions "$current_version" "ge" "$LATEST_ASF_RELEASE" && exit
+
+        git config --local user.name "github-actions[bot]"
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config -f .gitmodules submodule.ArchiSteamFarm.branch "$LATEST_ASF_RELEASE"
+        git add -A ".gitmodules"
+        git commit -m "chore(deps): update ASF reference to ${LATEST_ASF_RELEASE}"
+
+    - name: Push changes to the repo
+      uses: ad-m/github-push-action@77c5b412c50b723d2a4fbc6d71fb5723bcd439aa # v1.0.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}
