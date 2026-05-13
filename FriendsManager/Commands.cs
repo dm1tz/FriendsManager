@@ -12,14 +12,11 @@ using System.ComponentModel;
 using ArchiSteamFarm.Core;
 using System.Linq;
 using ArchiSteamFarm;
-using FriendsManager.Helpers;
-using System.Threading;
 
 namespace FriendsManager;
 
 internal static class Commands {
-	private static readonly string[] TableHeader = ["SteamID", "Name"];
-
+	private static readonly string[] TableHeader = ["Profile Name", "Steam ID"];
 	internal static async Task<string?> OnBotCommand(Bot bot, EAccess access, string[] args, ulong steamID = 0) {
 		ArgumentNullException.ThrowIfNull(bot);
 
@@ -75,25 +72,7 @@ internal static class Commands {
 		}
 		return null;
 	}
-
-	private static List<SteamID>? ParseSteamIDs(string steamIDsText) {
-		string[] steamIDsArgs = steamIDsText.Split(SharedInfo.ListElementSeparators, StringSplitOptions.RemoveEmptyEntries);
-
-		List<SteamID> steamIDs = [];
-
-		foreach (string steamIDsArg in steamIDsArgs) {
-			if (!ulong.TryParse(steamIDsArg, out ulong steamID) || !new SteamID(steamID).IsValid || !new SteamID(steamID).IsIndividualAccount) {
-				return null;
-			}
-
-			steamIDs.Add(steamID);
-		}
-
-		return steamIDs;
-	}
-
 	private static List<SteamID> GetFriendList(SteamFriends steamFriends, EFriendRelationship relationship = EFriendRelationship.Friend) => [.. Enumerable.Range(0, steamFriends.GetFriendCount()).Select(i => steamFriends.GetFriendByIndex(i)).Where(friendID => steamFriends.GetFriendRelationship(friendID) == relationship)];
-
 	private static string? ResponseFriends(EAccess access, Bot bot) {
 		if (access < EAccess.FamilySharing) {
 			return access > EAccess.None ? Interaction.Commands.FormatStaticResponse(Strings.ErrorAccessDenied) : null;
@@ -113,13 +92,12 @@ internal static class Commands {
 
 		ConsoleTable friendTable = new ConsoleTable(TableHeader).Configure(o => o.EnableCount = false);
 
-		friends.ForEach(friend => friendTable.AddRow(friend.ConvertToUInt64(), steamFriends.GetFriendPersonaName(friend) ?? string.Empty));
+		friends.ForEach(friend => friendTable.AddRow(steamFriends.GetFriendPersonaName(friend) ?? string.Empty, friend.ConvertToUInt64()));
 
 		string result = string.Join(Environment.NewLine, PluginLocale.Strings.FormatBotFriends(friends.Count), friendTable);
 
 		return bot.Commands.FormatBotResponse(result);
 	}
-
 	private static async Task<string?> ResponseFriends(EAccess access, string botNames, ulong steamID = 0) {
 		if (!Enum.IsDefined(access)) {
 			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
@@ -143,7 +121,6 @@ internal static class Commands {
 
 		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
 	}
-
 	private static string? ResponseSentInvites(EAccess access, Bot bot) {
 		if (access < EAccess.FamilySharing) {
 			return access > EAccess.None ? Interaction.Commands.FormatStaticResponse(Strings.ErrorAccessDenied) : null;
@@ -163,13 +140,12 @@ internal static class Commands {
 
 		ConsoleTable sentInvitesTable = new ConsoleTable(TableHeader).Configure(o => o.EnableCount = false);
 
-		sentInvites.ForEach(friend => sentInvitesTable.AddRow(friend.ConvertToUInt64(), steamFriends.GetFriendPersonaName(friend) ?? string.Empty));
+		sentInvites.ForEach(friend => sentInvitesTable.AddRow(steamFriends.GetFriendPersonaName(friend) ?? string.Empty, friend.ConvertToUInt64()));
 
 		string result = string.Join(Environment.NewLine, PluginLocale.Strings.FormatBotSentInvites(sentInvites.Count), sentInvitesTable);
 
 		return bot.Commands.FormatBotResponse(result);
 	}
-
 	private static async Task<string?> ResponseSentInvites(EAccess access, string botNames, ulong steamID = 0) {
 		if (!Enum.IsDefined(access)) {
 			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
@@ -193,7 +169,6 @@ internal static class Commands {
 
 		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
 	}
-
 	private static string? ResponseReceivedInvites(EAccess access, Bot bot) {
 		if (access < EAccess.FamilySharing) {
 			return access > EAccess.None ? Interaction.Commands.FormatStaticResponse(Strings.ErrorAccessDenied) : null;
@@ -213,13 +188,12 @@ internal static class Commands {
 
 		ConsoleTable receivedInvitesTable = new ConsoleTable(TableHeader).Configure(o => o.EnableCount = false);
 
-		receivedInvites.ForEach(friend => receivedInvitesTable.AddRow(friend.ConvertToUInt64(), steamFriends.GetFriendPersonaName(friend) ?? string.Empty));
+		receivedInvites.ForEach(friend => receivedInvitesTable.AddRow(steamFriends.GetFriendPersonaName(friend) ?? string.Empty, friend.ConvertToUInt64()));
 
 		string result = string.Join(Environment.NewLine, PluginLocale.Strings.FormatBotReceivedInvites(receivedInvites.Count), receivedInvitesTable);
 
 		return bot.Commands.FormatBotResponse(result);
 	}
-
 	private static async Task<string?> ResponseReceivedInvites(EAccess access, string botNames, ulong steamID = 0) {
 		if (!Enum.IsDefined(access)) {
 			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
@@ -243,9 +217,34 @@ internal static class Commands {
 
 		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
 	}
+	private static IEnumerable<SteamID> GetRawSteamID(string target) {
+		if (ulong.TryParse(target, out ulong rawID)) {
+			yield return (SteamID) rawID;
+		}
+	}
+	private static List<SteamID> ResolveTargetsToSteamIDs(string targetsText) {
+		string[] targets = targetsText.Split(SharedInfo.ListElementSeparators, StringSplitOptions.RemoveEmptyEntries);
 
-	private static async Task<string?> ResponseAddFriend(EAccess access, Bot bot, string steamIDsText) {
-		ArgumentException.ThrowIfNullOrEmpty(steamIDsText);
+		List<SteamID> steamIDs = [];
+		HashSet<SteamID> seen = [];
+
+		foreach (string target in targets) {
+			HashSet<Bot>? bots = Bot.GetBots(target);
+
+			IEnumerable<SteamID> candidates = bots?.Count > 0 ?
+				bots.Select(static b => (SteamID) b.SteamID) : GetRawSteamID(target);
+
+			foreach (SteamID candidate in candidates) {
+				if (candidate.IsValid && candidate.IsIndividualAccount && seen.Add(candidate)) {
+					steamIDs.Add(candidate);
+				}
+			}
+		}
+
+		return steamIDs;
+	}
+	private static string? ResponseAddFriend(EAccess access, Bot bot, string targetsText) {
+		ArgumentException.ThrowIfNullOrEmpty(targetsText);
 
 		if (access < EAccess.Master) {
 			return access > EAccess.None ? Interaction.Commands.FormatStaticResponse(Strings.ErrorAccessDenied) : null;
@@ -255,43 +254,17 @@ internal static class Commands {
 			return bot.Commands.FormatBotResponse(Strings.BotNotConnected);
 		}
 
-		List<SteamID>? steamIDs = ParseSteamIDs(steamIDsText);
+		List<SteamID> steamIDs = ResolveTargetsToSteamIDs(targetsText);
 
-		if ((steamIDs == null) || (steamIDs.Count == 0)) {
+		if (steamIDs.Count == 0) {
 			return bot.Commands.FormatBotResponse(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsInvalid, nameof(steamIDs)));
 		}
 
-		SteamFriends steamFriends = bot.SteamFriends;
+		steamIDs.ForEach(bot.SteamFriends.AddFriend);
 
-		CallbackTracker tracker = new(steamIDs.Count);
-		FriendsManagerPlugin.FriendAddTrackers[bot] = tracker;
-
-		try {
-			steamIDs.ForEach(steamFriends.AddFriend);
-
-			List<SteamFriends.FriendAddedCallback> callbacks;
-
-			try {
-				callbacks = await tracker.WaitForCallbacks(TimeSpan.FromSeconds(5)).ConfigureAwait(false);
-			} catch (OperationCanceledException) {
-				callbacks = [];
-			}
-
-			List<SteamID> sentInvites = [.. callbacks.Select(static c => c.SteamID)];
-
-			ConsoleTable sentInvitesTable = new ConsoleTable(TableHeader).Configure(o => o.EnableCount = false);
-
-			sentInvites.ForEach(steamID => sentInvitesTable.AddRow(steamID.ConvertToUInt64(), steamFriends.GetFriendPersonaName(steamID) ?? string.Empty));
-
-			string result = string.Join(Environment.NewLine, PluginLocale.Strings.FormatBotAddedFriends(steamIDs.Count, sentInvites.Count), sentInvitesTable);
-
-			return bot.Commands.FormatBotResponse(result);
-		} finally {
-			_ = FriendsManagerPlugin.FriendAddTrackers.TryRemove(bot, out _);
-		}
+		return bot.Commands.FormatBotResponse(PluginLocale.Strings.FormatBotAddedFriends(steamIDs.Count, steamIDs.Count));
 	}
-
-	private static async Task<string?> ResponseAddFriend(EAccess access, string botNames, string steamIDsText, ulong steamID = 0) {
+	private static async Task<string?> ResponseAddFriend(EAccess access, string botNames, string targetsText, ulong steamID = 0) {
 		if (!Enum.IsDefined(access)) {
 			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
 		}
@@ -308,15 +281,14 @@ internal static class Commands {
 			return access >= EAccess.Master ? Interaction.Commands.FormatStaticResponse(string.Format(CultureInfo.CurrentCulture, Strings.BotNotFound, botNames)) : null;
 		}
 
-		IList<string?> results = await Utilities.InParallel(bots.Select(bot => Task.Run(() => ResponseAddFriend(Interaction.Commands.GetProxyAccess(bot, access, steamID), bot, steamIDsText)))).ConfigureAwait(false);
+		IList<string?> results = await Utilities.InParallel(bots.Select(bot => Task.FromResult(ResponseAddFriend(Interaction.Commands.GetProxyAccess(bot, access, steamID), bot, targetsText)))).ConfigureAwait(false);
 
 		List<string> responses = [.. results.Where(static result => !string.IsNullOrEmpty(result)).Select(static result => result!)];
 
 		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
 	}
-
-	private static async Task<string?> ResponseRemoveFriend(EAccess access, Bot bot, string steamIDsText) {
-		ArgumentException.ThrowIfNullOrEmpty(steamIDsText);
+	private static async Task<string?> ResponseRemoveFriend(EAccess access, Bot bot, string targetsText) {
+		ArgumentException.ThrowIfNullOrEmpty(targetsText);
 
 		if (access < EAccess.Master) {
 			return access > EAccess.None ? Interaction.Commands.FormatStaticResponse(Strings.ErrorAccessDenied) : null;
@@ -326,9 +298,9 @@ internal static class Commands {
 			return bot.Commands.FormatBotResponse(Strings.BotNotConnected);
 		}
 
-		List<SteamID>? steamIDs = ParseSteamIDs(steamIDsText);
+		List<SteamID> steamIDs = ResolveTargetsToSteamIDs(targetsText);
 
-		if ((steamIDs == null) || (steamIDs.Count == 0)) {
+		if (steamIDs.Count == 0) {
 			return bot.Commands.FormatBotResponse(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsInvalid, nameof(steamIDs)));
 		}
 
@@ -344,14 +316,13 @@ internal static class Commands {
 
 		ConsoleTable removedFriendsTable = new ConsoleTable(TableHeader).Configure(o => o.EnableCount = false);
 
-		removedFriends.ForEach(friend => removedFriendsTable.AddRow(friend.ConvertToUInt64(), steamFriends.GetFriendPersonaName(friend) ?? string.Empty));
+		removedFriends.ForEach(friend => removedFriendsTable.AddRow(steamFriends.GetFriendPersonaName(friend) ?? string.Empty, friend.ConvertToUInt64()));
 
 		string result = string.Join(Environment.NewLine, PluginLocale.Strings.FormatBotRemovedFriends(friendsToRemove.Count, removedFriends.Count), removedFriendsTable);
 
 		return bot.Commands.FormatBotResponse(result);
 	}
-
-	private static async Task<string?> ResponseRemoveFriend(EAccess access, string botNames, string steamIDsText, ulong steamID = 0) {
+	private static async Task<string?> ResponseRemoveFriend(EAccess access, string botNames, string targetsText, ulong steamID = 0) {
 		if (!Enum.IsDefined(access)) {
 			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
 		}

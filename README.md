@@ -8,6 +8,7 @@ Command | Alias | Access | Description
 `friends [Bots]` | `fr` | `FamilySharing`| Prints friends list of the given bot instances.
 `sentinvites [Bots]` | `sinv` | `FamilySharing`| Prints sent friend invites of the given bot instances.
 `receivedinvites [Bots]` | `rinv` | `FamilySharing`| Prints received friend invites of the given bot instances.
-`addfriend [Bots] <SteamIDs>` | `adfr` | `Master`| Sends a friend invite from the given bot instances.
-`removefriend [Bots] <SteamIDs>` | `rmfr` | `Master`| Removes friend from the given bot instances friends list.
+`addfriend [Bots] <Bots>/<SteamIDs>` | `adfr` | `Master`| Sends a friend invite from the given bot instances.
+`removefriend [Bots] <Bots>/<SteamIDs>` | `rmfr` | `Master`| Removes friend from the given bot instances friends list.
+`removeallfriends [Bots]` | `rmafr` | `Master`| Removes all friends from the given bot instances friends list.
 `fmversion` | `fmv` | `FamilySharing` | Prints the actual version of plugin.
