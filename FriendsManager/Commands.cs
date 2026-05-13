@@ -46,6 +46,8 @@ internal static class Commands {
 						return ResponseReceivedInvites(access, bot);
 					case "FMVERSION" or "FMV":
 						return ResponseVersion(access);
+					case "RMAFR" or "REMOVEALLFRIENDS":
+						return await ResponseRemoveAllFriends(access, bot).ConfigureAwait(false);
 				}
 				break;
 
@@ -57,14 +59,16 @@ internal static class Commands {
 						return await ResponseSentInvites(access, Utilities.GetArgsAsText(args, 1, ","), steamID).ConfigureAwait(false);
 					case "RECEIVEDINVITES" or "RINV":
 						return await ResponseReceivedInvites(access, Utilities.GetArgsAsText(args, 1, ","), steamID).ConfigureAwait(false);
-					case "ADFR" or "ADDFRIEND" when args.Length > 2:
+					case "ADDFR" or "ADDFRIEND" when args.Length > 2:
 						return await ResponseAddFriend(access, args[1], Utilities.GetArgsAsText(args, 2, ","), steamID).ConfigureAwait(false);
-					case "ADFR" or "ADDFRIEND":
-						return await ResponseAddFriend(access, bot, Utilities.GetArgsAsText(args, 1, ",")).ConfigureAwait(false);
+					case "ADDFR" or "ADDFRIEND":
+						return ResponseAddFriend(access, bot, Utilities.GetArgsAsText(args, 1, ","));
 					case "RMFR" or "REMOVEFRIEND" when args.Length > 2:
 						return await ResponseRemoveFriend(access, args[1], Utilities.GetArgsAsText(args, 2, ","), steamID).ConfigureAwait(false);
 					case "RMFR" or "REMOVEFRIEND":
 						return await ResponseRemoveFriend(access, bot, Utilities.GetArgsAsText(args, 1, ",")).ConfigureAwait(false);
+					case "RMAFR" or "REMOVEALLFRIENDS":
+						return await ResponseRemoveAllFriends(access, Utilities.GetArgsAsText(args, 1, ","), steamID).ConfigureAwait(false);
 				}
 
 				break;
@@ -364,13 +368,60 @@ internal static class Commands {
 			return access >= EAccess.Master ? Interaction.Commands.FormatStaticResponse(string.Format(CultureInfo.CurrentCulture, Strings.BotNotFound, botNames)) : null;
 		}
 
-		IList<string?> results = await Utilities.InParallel(bots.Select(bot => Task.Run(() => ResponseRemoveFriend(Interaction.Commands.GetProxyAccess(bot, access, steamID), bot, steamIDsText)))).ConfigureAwait(false);
+		IList<string?> results = await Utilities.InParallel(bots.Select(bot => ResponseRemoveFriend(Interaction.Commands.GetProxyAccess(bot, access, steamID), bot, targetsText))).ConfigureAwait(false);
 
 		List<string> responses = [.. results.Where(static result => !string.IsNullOrEmpty(result)).Select(static result => result!)];
 
 		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
 	}
+	private static async Task<string?> ResponseRemoveAllFriends(EAccess access, Bot bot) {
+		if (access < EAccess.Master) {
+			return access > EAccess.None ? Interaction.Commands.FormatStaticResponse(Strings.ErrorAccessDenied) : null;
+		}
 
+		if (!bot.IsConnectedAndLoggedOn) {
+			return bot.Commands.FormatBotResponse(Strings.BotNotConnected);
+		}
+
+		SteamFriends steamFriends = bot.SteamFriends;
+
+		List<SteamID> friends = GetFriendList(steamFriends);
+
+		if (friends.Count == 0) {
+			return bot.Commands.FormatBotResponse(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, nameof(friends)));
+		}
+
+		friends.ForEach(steamFriends.RemoveFriend);
+
+		await Task.Delay(1000).ConfigureAwait(false);
+
+		int removedCount = friends.Count - GetFriendList(steamFriends).Count;
+
+		return bot.Commands.FormatBotResponse(PluginLocale.Strings.FormatBotRemovedFriends(friends.Count, removedCount));
+	}
+	private static async Task<string?> ResponseRemoveAllFriends(EAccess access, string botNames, ulong steamID = 0) {
+		if (!Enum.IsDefined(access)) {
+			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
+		}
+
+		ArgumentException.ThrowIfNullOrEmpty(botNames);
+
+		if ((steamID != 0) && !new SteamID(steamID).IsIndividualAccount) {
+			throw new ArgumentOutOfRangeException(nameof(steamID));
+		}
+
+		HashSet<Bot>? bots = Bot.GetBots(botNames);
+
+		if ((bots == null) || (bots.Count == 0)) {
+			return access >= EAccess.Master ? Interaction.Commands.FormatStaticResponse(string.Format(CultureInfo.CurrentCulture, Strings.BotNotFound, botNames)) : null;
+		}
+
+		IList<string?> results = await Utilities.InParallel(bots.Select(bot => ResponseRemoveAllFriends(Interaction.Commands.GetProxyAccess(bot, access, steamID), bot))).ConfigureAwait(false);
+
+		List<string> responses = [.. results.Where(static result => !string.IsNullOrEmpty(result)).Select(static result => result!)];
+
+		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
+	}
 	private static string? ResponseVersion(EAccess access) {
 		if (access < EAccess.FamilySharing) {
 			return access > EAccess.None ? Interaction.Commands.FormatStaticResponse(Strings.ErrorAccessDenied) : null;
