@@ -80,4 +80,12 @@
 		<value>Removed {0}/{1} friends.</value>
 		<comment>{0} will be replaced by initial friends count, {1} will be replaced by removed friends count</comment>
 	</data>
++	<data name="BotAcceptedInvites" xml:space="preserve">
++		<value>Accepted {0}/{1} invites.</value>
++		<comment>{0} will be replaced by initial invites count, {1} will be replaced by accepted invites count</comment>
++	</data>
++	<data name="BotDeclinedInvites" xml:space="preserve">
++		<value>Declined {0}/{1} invites.</value>
++		<comment>{0} will be replaced by initial invites count, {1} will be replaced by declined invites count</comment>
++	</data>
 </root>
