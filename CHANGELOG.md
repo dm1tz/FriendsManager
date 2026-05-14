@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/dm1tz/FriendsManager/compare/0.1.1...0.2.0) (2026-05-14)
+
+
+### Features
+
+* **commands:** add `removeallfriends` command ([e64d7de](https://github.com/dm1tz/FriendsManager/commit/e64d7de7eb47b754203bfdd1121d70d0b740639e))
+
 ## [0.1.1](https://github.com/dm1tz/FriendsManager/compare/v0.1.0...0.1.1) (2026-03-08)
 
 
