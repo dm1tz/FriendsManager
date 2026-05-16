@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/dm1tz/FriendsManager/compare/0.2.0...0.3.0) (2026-05-16)
+
+
+### Features
+
+* **commands:** add `acceptallinvites` and `declineallinvites` ([#25](https://github.com/dm1tz/FriendsManager/issues/25)) ([63e3981](https://github.com/dm1tz/FriendsManager/commit/63e398110be866e24a84dcd207e61dddfda87b75))
+
 ## [0.2.0](https://github.com/dm1tz/FriendsManager/compare/0.1.1...0.2.0) (2026-05-14)
 
 
