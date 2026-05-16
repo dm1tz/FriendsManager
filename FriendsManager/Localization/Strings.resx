@@ -60,6 +60,9 @@
 		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089
 		</value>
 	</resheader>
+	<data name="BotAccountLimited" xml:space="preserve">
+		<value>This account is limited and cannot send friend invites!</value>
+	</data>
 	<data name="BotFriends" xml:space="preserve">
 		<value>Bot has {0} friends:</value>
 		<comment>{0} will be replaced by friend count</comment>
@@ -74,18 +77,18 @@
 	</data>
 	<data name="BotAddedFriends" xml:space="preserve">
 		<value>Sent {0}/{1} invites.</value>
-		<comment>{0} will be replaced by initial invites count, {1} will be replaced by successful invites count</comment>
+		<comment>{0} will be replaced by successful invites count, {1} will be replaced by initial invites count</comment>
 	</data>
 	<data name="BotRemovedFriends" xml:space="preserve">
 		<value>Removed {0}/{1} friends.</value>
-		<comment>{0} will be replaced by initial friends count, {1} will be replaced by removed friends count</comment>
+		<comment>{0} will be replaced by removed friends count, {1} will be replaced by initial friends count</comment>
 	</data>
-+	<data name="BotAcceptedInvites" xml:space="preserve">
-+		<value>Accepted {0}/{1} invites.</value>
-+		<comment>{0} will be replaced by initial invites count, {1} will be replaced by accepted invites count</comment>
-+	</data>
-+	<data name="BotDeclinedInvites" xml:space="preserve">
-+		<value>Declined {0}/{1} invites.</value>
-+		<comment>{0} will be replaced by initial invites count, {1} will be replaced by declined invites count</comment>
-+	</data>
+	<data name="BotAcceptedInvites" xml:space="preserve">
+		<value>Accepted {0}/{1} invites.</value>
+		<comment>{0} will be replaced by accepted invites count, {1} will be replaced by initial invites count</comment>
+	</data>
+	<data name="BotDeclinedInvites" xml:space="preserve">
+		<value>Declined {0}/{1} invites.</value>
+		<comment>{0} will be replaced by declined invites count, {1} will be replaced by initial invites count</comment>
+	</data>
 </root>
