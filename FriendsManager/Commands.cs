@@ -90,6 +90,7 @@ internal static class Commands {
 
 		return null;
 	}
+
 	private static IEnumerable<SteamID> GetRawSteamID(string target) {
 		if (ulong.TryParse(target, out ulong rawID)) {
 			yield return (SteamID) rawID;
@@ -115,6 +116,7 @@ internal static class Commands {
 
 		return steamIDs;
 	}
+
 	private static HashSet<SteamID> GetFriends(SteamFriends steamFriends, EFriendRelationship relationship = EFriendRelationship.Friend) =>
 		[.. Enumerable.Range(0, steamFriends.GetFriendCount())
 			.Select(i => steamFriends.GetFriendByIndex(i))
@@ -295,7 +297,6 @@ internal static class Commands {
 		ushort successCount = 0;
 
 		foreach (ulong steamID in steamIDs) {
-			bot.ArchiLogger.LogGenericInfo($"steam id: {steamID}");
 			if (await bot.ArchiHandler.AddFriend(steamID).ConfigureAwait(false)) {
 				successCount++;
 			}
