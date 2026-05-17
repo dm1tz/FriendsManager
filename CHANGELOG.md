@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/dm1tz/FriendsManager/compare/0.3.0...0.3.1) (2026-05-17)
+
+
+### Bug Fixes
+
+* **commands:** remove leftover logging entry ([5dd1697](https://github.com/dm1tz/FriendsManager/commit/5dd1697d61c94adcdc3b8e8cff048b31bbf67ac1))
+
 ## [0.3.0](https://github.com/dm1tz/FriendsManager/compare/0.2.0...0.3.0) (2026-05-16)
 
 
