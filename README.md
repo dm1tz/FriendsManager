@@ -15,4 +15,4 @@ Command | Alias | Access | Description
 `acceptallinvites [Bots]` | `aainv` | `Master` | Accepts all pending received friend invites for the given bot instances.
 `declineinvite [Bots] <Targets>` | `dinv` | `Master` | Declines received friend invites from the given targets. Each target is resolved as a bot name first, falling back to a raw SteamID64.
 `declineallinvites [Bots]` | `dainv` | `Master` | Declines all pending received friend invites for the given bot instances.
-`fmversion` | `fmv` | `FamilySharing` | Prints the actual version of plugin.
+`fmversion` | `fmv` | `FamilySharing` | Prints the plugin version.
