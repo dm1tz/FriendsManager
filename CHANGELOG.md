@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/dm1tz/FriendsManager/compare/0.4.0...0.4.1) (2026-08-16)
+
+
+### Bug Fixes
+
+* **commands:** add `fr` alias for multi-bot variant ([ce609e1](https://github.com/dm1tz/FriendsManager/commit/ce609e1d4196b3ac66f823bb21be2ad4de928070))
+
 ## [0.4.0](https://github.com/dm1tz/FriendsManager/compare/0.3.1...0.4.0) (2026-08-16)
 
 
