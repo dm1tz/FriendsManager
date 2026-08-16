@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/dm1tz/FriendsManager/compare/0.3.1...0.4.0) (2026-08-16)
+
+
+### Features
+
+* **commands:** add `friendcode` ([#44](https://github.com/dm1tz/FriendsManager/issues/44)) ([3983434](https://github.com/dm1tz/FriendsManager/commit/39834347cb8726c6c1445ec99250a7405606b456))
+
 ## [0.3.1](https://github.com/dm1tz/FriendsManager/compare/0.3.0...0.3.1) (2026-05-17)
 
 
