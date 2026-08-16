@@ -35,10 +35,10 @@ internal static class Commands {
 		switch (args.Length) {
 			case 1:
 				switch (args[0].ToUpperInvariant()) {
-					case "FRIENDCODE" or "FC":
-						return ResponseFriendCode(access, bot);
 					case "FRIENDS" or "FR":
 						return ResponseFriends(access, bot);
+					case "FRIENDCODE" or "FC":
+						return ResponseFriendCode(access, bot);
 					case "SENTINVITES" or "SINV":
 						return ResponseSentInvites(access, bot);
 					case "RECEIVEDINVITES" or "RINV":
@@ -57,10 +57,10 @@ internal static class Commands {
 
 			default:
 				switch (args[0].ToUpperInvariant()) {
-					case "FRIENDCODE":
-						return await ResponseFriendCode(access, Utilities.GetArgsAsText(args, 1, ","), steamID).ConfigureAwait(false);
 					case "FRIENDS" or "FR":
 						return await ResponseFriends(access, Utilities.GetArgsAsText(args, 1, ","), steamID).ConfigureAwait(false);
+					case "FRIENDCODE" or "FC":
+						return await ResponseFriendCode(access, Utilities.GetArgsAsText(args, 1, ","), steamID).ConfigureAwait(false);
 					case "SENTINVITES" or "SINV":
 						return await ResponseSentInvites(access, Utilities.GetArgsAsText(args, 1, ","), steamID).ConfigureAwait(false);
 					case "RECEIVEDINVITES" or "RINV":

@@ -5,8 +5,8 @@
 ## Commands
 Command | Alias | Access | Description
 --- | ---| --- | ---
-`friendcode [Bots]` | `fc` | `FamilySharing` | Prints friend code of given bot instances.
 `friends [Bots]` | `fr` | `FamilySharing` | Prints friends list of given bot instances.
+`friendcode [Bots]` | `fc` | `FamilySharing` | Prints friend code of given bot instances.
 `sentinvites [Bots]` | `sinv` | `FamilySharing` | Prints sent friend invites of given bot instances.
 `receivedinvites [Bots]` | `rinv` | `FamilySharing` | Prints received friend invites of given bot instances.
 `sendinvite [Bots] <Targets>` | `sfinv` | `Master` | Sends a friend invite from given bot instances. Each target is resolved as a bot name first, falling back to a raw SteamID64.
