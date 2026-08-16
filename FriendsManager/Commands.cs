@@ -35,53 +35,57 @@ internal static class Commands {
 		switch (args.Length) {
 			case 1:
 				switch (args[0].ToUpperInvariant()) {
-					case "FR" or "FRIENDS":
+					case "FRIENDCODE" or "FC":
+						return ResponseFriendCode(access, bot);
+					case "FRIENDS" or "FR":
 						return ResponseFriends(access, bot);
-					case "SINV" or "SENTINVITES":
+					case "SENTINVITES" or "SINV":
 						return ResponseSentInvites(access, bot);
-					case "RINV" or "RECEIVEDINVITES":
+					case "RECEIVEDINVITES" or "RINV":
 						return ResponseReceivedInvites(access, bot);
+					case "REMOVEALLFRIENDS" or "RMAFR":
+						return await ResponseRemoveAllFriends(access, bot).ConfigureAwait(false);
+					case "ACCEPTALLINVITES" or "AAINV":
+						return await ResponseAcceptAllInvites(access, bot).ConfigureAwait(false);
+					case "DECLINEALLINVITES" or "DAINV":
+						return await ResponseDeclineAllInvites(access, bot).ConfigureAwait(false);
 					case "FMVERSION" or "FMV":
 						return ResponseVersion(access);
-					case "RMAFR" or "REMOVEALLFRIENDS":
-						return await ResponseRemoveAllFriends(access, bot).ConfigureAwait(false);
-					case "AAINV" or "ACCEPTALLINVITES":
-						return await ResponseAcceptAllInvites(access, bot).ConfigureAwait(false);
-					case "DAINV" or "DECLINEALLINVITES":
-						return await ResponseDeclineAllInvites(access, bot).ConfigureAwait(false);
 				}
 
 				break;
 
 			default:
 				switch (args[0].ToUpperInvariant()) {
+					case "FRIENDCODE":
+						return await ResponseFriendCode(access, Utilities.GetArgsAsText(args, 1, ","), steamID).ConfigureAwait(false);
 					case "FRIENDS" or "FR":
 						return await ResponseFriends(access, Utilities.GetArgsAsText(args, 1, ","), steamID).ConfigureAwait(false);
 					case "SENTINVITES" or "SINV":
 						return await ResponseSentInvites(access, Utilities.GetArgsAsText(args, 1, ","), steamID).ConfigureAwait(false);
 					case "RECEIVEDINVITES" or "RINV":
 						return await ResponseReceivedInvites(access, Utilities.GetArgsAsText(args, 1, ","), steamID).ConfigureAwait(false);
-					case "SFINV" or "SENDINVITE" when args.Length > 2:
+					case "SENDINVITE" or "SFINV" when args.Length > 2:
 						return await ResponseSendInvite(access, args[1], Utilities.GetArgsAsText(args, 2, ","), steamID).ConfigureAwait(false);
-					case "SFINV" or "SENDINVITE":
+					case "SENDINVITE" or "SFINV":
 						return await ResponseSendInvite(access, bot, Utilities.GetArgsAsText(args, 1, ",")).ConfigureAwait(false);
-					case "RMFR" or "REMOVEFRIEND" when args.Length > 2:
+					case "REMOVEFRIEND" or "RMFR" when args.Length > 2:
 						return await ResponseRemoveFriend(access, args[1], Utilities.GetArgsAsText(args, 2, ","), steamID).ConfigureAwait(false);
-					case "RMFR" or "REMOVEFRIEND":
+					case "REMOVEFRIEND" or "RMFR":
 						return await ResponseRemoveFriend(access, bot, Utilities.GetArgsAsText(args, 1, ",")).ConfigureAwait(false);
-					case "RMAFR" or "REMOVEALLFRIENDS":
+					case "REMOVEALLFRIENDS" or "RMAFR":
 						return await ResponseRemoveAllFriends(access, Utilities.GetArgsAsText(args, 1, ","), steamID).ConfigureAwait(false);
-					case "AINV" or "ACCEPTINVITE" when args.Length > 2:
+					case "ACCEPTINVITE" or "AINV" when args.Length > 2:
 						return await ResponseAcceptInvite(access, args[1], Utilities.GetArgsAsText(args, 2, ","), steamID).ConfigureAwait(false);
-					case "AINV" or "ACCEPTINVITE":
+					case "ACCEPTINVITE" or "AINV":
 						return await ResponseAcceptInvite(access, bot, Utilities.GetArgsAsText(args, 1, ",")).ConfigureAwait(false);
-					case "DINV" or "DECLINEINVITE" when args.Length > 2:
-						return await ResponseDeclineInvite(access, args[1], Utilities.GetArgsAsText(args, 2, ","), steamID).ConfigureAwait(false);
-					case "DINV" or "DECLINEINVITE":
-						return await ResponseDeclineInvite(access, bot, Utilities.GetArgsAsText(args, 1, ",")).ConfigureAwait(false);
-					case "AAINV" or "ACCEPTALLINVITES":
+					case "ACCEPTALLINVITES" or "AAINV":
 						return await ResponseAcceptAllInvites(access, Utilities.GetArgsAsText(args, 1, ","), steamID).ConfigureAwait(false);
-					case "DAINV" or "DECLINEALLINVITES":
+					case "DECLINEINVITE" or "DINV" when args.Length > 2:
+						return await ResponseDeclineInvite(access, args[1], Utilities.GetArgsAsText(args, 2, ","), steamID).ConfigureAwait(false);
+					case "DECLINEINVITE" or "DINV":
+						return await ResponseDeclineInvite(access, bot, Utilities.GetArgsAsText(args, 1, ",")).ConfigureAwait(false);
+					case "DECLINEALLINVITES" or "DAINV":
 						return await ResponseDeclineAllInvites(access, Utilities.GetArgsAsText(args, 1, ","), steamID).ConfigureAwait(false);
 				}
 
@@ -96,6 +100,7 @@ internal static class Commands {
 			yield return (SteamID) rawID;
 		}
 	}
+
 	private static HashSet<SteamID> ResolveTargetsToSteamIDs(string targetsText) {
 		string[] targets = targetsText.Split(SharedInfo.ListElementSeparators, StringSplitOptions.RemoveEmptyEntries);
 
@@ -121,6 +126,42 @@ internal static class Commands {
 		[.. Enumerable.Range(0, steamFriends.GetFriendCount())
 			.Select(i => steamFriends.GetFriendByIndex(i))
 			.Where(friendID => steamFriends.GetFriendRelationship(friendID) == relationship)];
+
+	private static string? ResponseFriendCode(EAccess access, Bot bot) {
+		if (access < EAccess.FamilySharing) {
+			return access > EAccess.None ? Interaction.Commands.FormatStaticResponse(Strings.ErrorAccessDenied) : null;
+		}
+
+		if (!bot.IsConnectedAndLoggedOn) {
+			return bot.Commands.FormatBotResponse(Strings.BotNotConnected);
+		}
+
+		return bot.Commands.FormatBotResponse(PluginLocale.Strings.FormatBotFriendCode(new SteamID(bot.SteamID).AccountID));
+	}
+
+	private static async Task<string?> ResponseFriendCode(EAccess access, string botNames, ulong steamID = 0) {
+		if (!Enum.IsDefined(access)) {
+			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
+		}
+
+		ArgumentException.ThrowIfNullOrEmpty(botNames);
+
+		if ((steamID != 0) && !new SteamID(steamID).IsIndividualAccount) {
+			throw new ArgumentOutOfRangeException(nameof(steamID));
+		}
+
+		HashSet<Bot>? bots = Bot.GetBots(botNames);
+
+		if ((bots == null) || (bots.Count == 0)) {
+			return access >= EAccess.Master ? Interaction.Commands.FormatStaticResponse(string.Format(CultureInfo.CurrentCulture, Strings.BotNotFound, botNames)) : null;
+		}
+
+		IList<string?> results = await Utilities.InParallel(bots.Select(bot => Task.Run(() => ResponseFriendCode(Interaction.Commands.GetProxyAccess(bot, access, steamID), bot)))).ConfigureAwait(false);
+
+		List<string> responses = [.. results.Where(static result => !string.IsNullOrEmpty(result)).Select(static result => result!)];
+
+		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
+	}
 
 	private static string? ResponseFriends(EAccess access, Bot bot) {
 		if (access < EAccess.FamilySharing) {
@@ -149,6 +190,7 @@ internal static class Commands {
 
 		return bot.Commands.FormatBotResponse(result);
 	}
+
 	private static async Task<string?> ResponseFriends(EAccess access, string botNames, ulong steamID = 0) {
 		if (!Enum.IsDefined(access)) {
 			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
@@ -200,6 +242,7 @@ internal static class Commands {
 
 		return bot.Commands.FormatBotResponse(result);
 	}
+
 	private static async Task<string?> ResponseSentInvites(EAccess access, string botNames, ulong steamID = 0) {
 		if (!Enum.IsDefined(access)) {
 			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
@@ -223,6 +266,7 @@ internal static class Commands {
 
 		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
 	}
+
 	private static string? ResponseReceivedInvites(EAccess access, Bot bot) {
 		if (access < EAccess.FamilySharing) {
 			return access > EAccess.None ? Interaction.Commands.FormatStaticResponse(Strings.ErrorAccessDenied) : null;
@@ -250,6 +294,7 @@ internal static class Commands {
 
 		return bot.Commands.FormatBotResponse(result);
 	}
+
 	private static async Task<string?> ResponseReceivedInvites(EAccess access, string botNames, ulong steamID = 0) {
 		if (!Enum.IsDefined(access)) {
 			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
@@ -273,6 +318,7 @@ internal static class Commands {
 
 		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
 	}
+
 	private static async Task<string?> ResponseSendInvite(EAccess access, Bot bot, string targetsText) {
 		ArgumentException.ThrowIfNullOrEmpty(targetsText);
 
@@ -304,6 +350,7 @@ internal static class Commands {
 
 		return bot.Commands.FormatBotResponse(PluginLocale.Strings.FormatBotAddedFriends(successCount, steamIDs.Count));
 	}
+
 	private static async Task<string?> ResponseSendInvite(EAccess access, string botNames, string targetsText, ulong steamID = 0) {
 		if (!Enum.IsDefined(access)) {
 			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
@@ -327,6 +374,7 @@ internal static class Commands {
 
 		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
 	}
+
 	private static async Task<string?> ResponseRemoveFriend(EAccess access, Bot bot, string targetsText) {
 		ArgumentException.ThrowIfNullOrEmpty(targetsText);
 
@@ -366,6 +414,7 @@ internal static class Commands {
 
 		return bot.Commands.FormatBotResponse(result);
 	}
+
 	private static async Task<string?> ResponseRemoveFriend(EAccess access, string botNames, string targetsText, ulong steamID = 0) {
 		if (!Enum.IsDefined(access)) {
 			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
@@ -389,6 +438,7 @@ internal static class Commands {
 
 		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
 	}
+
 	private static async Task<string?> ResponseRemoveAllFriends(EAccess access, Bot bot) {
 		if (access < EAccess.Master) {
 			return access > EAccess.None ? Interaction.Commands.FormatStaticResponse(Strings.ErrorAccessDenied) : null;
@@ -414,6 +464,7 @@ internal static class Commands {
 
 		return bot.Commands.FormatBotResponse(PluginLocale.Strings.FormatBotRemovedFriends(successCount, friends.Count));
 	}
+
 	private static async Task<string?> ResponseRemoveAllFriends(EAccess access, string botNames, ulong steamID = 0) {
 		if (!Enum.IsDefined(access)) {
 			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
@@ -437,6 +488,7 @@ internal static class Commands {
 
 		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
 	}
+
 	private static async Task<string?> ResponseAcceptInvite(EAccess access, Bot bot, string targetsText) {
 		ArgumentException.ThrowIfNullOrEmpty(targetsText);
 
@@ -468,6 +520,7 @@ internal static class Commands {
 
 		return bot.Commands.FormatBotResponse(PluginLocale.Strings.FormatBotAcceptedInvites(successCount, steamIDs.Count));
 	}
+
 	private static async Task<string?> ResponseAcceptInvite(EAccess access, string botNames, string targetsText, ulong steamID = 0) {
 		if (!Enum.IsDefined(access)) {
 			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
@@ -486,6 +539,56 @@ internal static class Commands {
 		}
 
 		IList<string?> results = await Utilities.InParallel(bots.Select(bot => ResponseAcceptInvite(Interaction.Commands.GetProxyAccess(bot, access, steamID), bot, targetsText))).ConfigureAwait(false);
+
+		List<string> responses = [.. results.Where(static result => !string.IsNullOrEmpty(result)).Select(static result => result!)];
+
+		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
+	}
+
+	private static async Task<string?> ResponseAcceptAllInvites(EAccess access, Bot bot) {
+		if (access < EAccess.Master) {
+			return access > EAccess.None ? Interaction.Commands.FormatStaticResponse(Strings.ErrorAccessDenied) : null;
+		}
+
+		if (!bot.IsConnectedAndLoggedOn) {
+			return bot.Commands.FormatBotResponse(Strings.BotNotConnected);
+		}
+
+		HashSet<SteamID> receivedInvites = GetFriends(bot.SteamFriends, EFriendRelationship.RequestRecipient);
+
+		if (receivedInvites.Count == 0) {
+			return bot.Commands.FormatBotResponse(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, nameof(receivedInvites)));
+		}
+
+		ushort successCount = 0;
+
+		foreach (ulong steamID in receivedInvites) {
+			if (await bot.ArchiHandler.AddFriend(steamID).ConfigureAwait(false)) {
+				successCount++;
+			}
+		}
+
+		return bot.Commands.FormatBotResponse(PluginLocale.Strings.FormatBotAcceptedInvites(successCount, receivedInvites.Count));
+	}
+
+	private static async Task<string?> ResponseAcceptAllInvites(EAccess access, string botNames, ulong steamID = 0) {
+		if (!Enum.IsDefined(access)) {
+			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
+		}
+
+		ArgumentException.ThrowIfNullOrEmpty(botNames);
+
+		if ((steamID != 0) && !new SteamID(steamID).IsIndividualAccount) {
+			throw new ArgumentOutOfRangeException(nameof(steamID));
+		}
+
+		HashSet<Bot>? bots = Bot.GetBots(botNames);
+
+		if ((bots == null) || (bots.Count == 0)) {
+			return access >= EAccess.Master ? Interaction.Commands.FormatStaticResponse(string.Format(CultureInfo.CurrentCulture, Strings.BotNotFound, botNames)) : null;
+		}
+
+		IList<string?> results = await Utilities.InParallel(bots.Select(bot => ResponseAcceptAllInvites(Interaction.Commands.GetProxyAccess(bot, access, steamID), bot))).ConfigureAwait(false);
 
 		List<string> responses = [.. results.Where(static result => !string.IsNullOrEmpty(result)).Select(static result => result!)];
 
@@ -547,54 +650,7 @@ internal static class Commands {
 
 		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
 	}
-	private static async Task<string?> ResponseAcceptAllInvites(EAccess access, Bot bot) {
-		if (access < EAccess.Master) {
-			return access > EAccess.None ? Interaction.Commands.FormatStaticResponse(Strings.ErrorAccessDenied) : null;
-		}
 
-		if (!bot.IsConnectedAndLoggedOn) {
-			return bot.Commands.FormatBotResponse(Strings.BotNotConnected);
-		}
-
-		HashSet<SteamID> receivedInvites = GetFriends(bot.SteamFriends, EFriendRelationship.RequestRecipient);
-
-		if (receivedInvites.Count == 0) {
-			return bot.Commands.FormatBotResponse(string.Format(CultureInfo.CurrentCulture, Strings.ErrorIsEmpty, nameof(receivedInvites)));
-		}
-
-		ushort successCount = 0;
-
-		foreach (ulong steamID in receivedInvites) {
-			if (await bot.ArchiHandler.AddFriend(steamID).ConfigureAwait(false)) {
-				successCount++;
-			}
-		}
-
-		return bot.Commands.FormatBotResponse(PluginLocale.Strings.FormatBotAcceptedInvites(successCount, receivedInvites.Count));
-	}
-	private static async Task<string?> ResponseAcceptAllInvites(EAccess access, string botNames, ulong steamID = 0) {
-		if (!Enum.IsDefined(access)) {
-			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
-		}
-
-		ArgumentException.ThrowIfNullOrEmpty(botNames);
-
-		if ((steamID != 0) && !new SteamID(steamID).IsIndividualAccount) {
-			throw new ArgumentOutOfRangeException(nameof(steamID));
-		}
-
-		HashSet<Bot>? bots = Bot.GetBots(botNames);
-
-		if ((bots == null) || (bots.Count == 0)) {
-			return access >= EAccess.Master ? Interaction.Commands.FormatStaticResponse(string.Format(CultureInfo.CurrentCulture, Strings.BotNotFound, botNames)) : null;
-		}
-
-		IList<string?> results = await Utilities.InParallel(bots.Select(bot => ResponseAcceptAllInvites(Interaction.Commands.GetProxyAccess(bot, access, steamID), bot))).ConfigureAwait(false);
-
-		List<string> responses = [.. results.Where(static result => !string.IsNullOrEmpty(result)).Select(static result => result!)];
-
-		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
-	}
 	private static async Task<string?> ResponseDeclineAllInvites(EAccess access, Bot bot) {
 		if (access < EAccess.Master) {
 			return access > EAccess.None ? Interaction.Commands.FormatStaticResponse(Strings.ErrorAccessDenied) : null;
@@ -620,6 +676,7 @@ internal static class Commands {
 
 		return bot.Commands.FormatBotResponse(PluginLocale.Strings.FormatBotDeclinedInvites(successCount, receivedInvites.Count));
 	}
+
 	private static async Task<string?> ResponseDeclineAllInvites(EAccess access, string botNames, ulong steamID = 0) {
 		if (!Enum.IsDefined(access)) {
 			throw new InvalidEnumArgumentException(nameof(access), (int) access, typeof(EAccess));
@@ -643,6 +700,7 @@ internal static class Commands {
 
 		return responses.Count > 0 ? string.Join(Environment.NewLine, responses) : null;
 	}
+
 	private static string? ResponseVersion(EAccess access) {
 		if (access < EAccess.FamilySharing) {
 			return access > EAccess.None ? Interaction.Commands.FormatStaticResponse(Strings.ErrorAccessDenied) : null;
