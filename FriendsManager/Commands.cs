@@ -518,7 +518,7 @@ internal static class Commands {
 			}
 		}
 
-		return bot.Commands.FormatBotResponse(PluginLocale.Strings.FormatBotAcceptedInvites(successCount, steamIDs.Count));
+		return bot.Commands.FormatBotResponse(PluginLocale.Strings.FormatBotAcceptedInvites(successCount, receivedInvites.Count));
 	}
 
 	private static async Task<string?> ResponseAcceptInvite(EAccess access, string botNames, string targetsText, ulong steamID = 0) {
@@ -624,7 +624,7 @@ internal static class Commands {
 			}
 		}
 
-		return bot.Commands.FormatBotResponse(PluginLocale.Strings.FormatBotDeclinedInvites(successCount, steamIDs.Count));
+		return bot.Commands.FormatBotResponse(PluginLocale.Strings.FormatBotDeclinedInvites(successCount, pendingInvites.Count));
 	}
 
 	private static async Task<string?> ResponseDeclineInvite(EAccess access, string botNames, string targetsText, ulong steamID = 0) {
