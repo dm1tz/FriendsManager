@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/dm1tz/FriendsManager/compare/0.4.1...0.4.2) (2026-09-26)
+
+
+### Bug Fixes
+
+* **commands:** report eligible invite counts ([#49](https://github.com/dm1tz/FriendsManager/issues/49)) ([48e9d86](https://github.com/dm1tz/FriendsManager/commit/48e9d863196487df2bcef67fb5a4e5eda90a845b))
+
 ## [0.4.1](https://github.com/dm1tz/FriendsManager/compare/0.4.0...0.4.1) (2026-08-16)
 
 
